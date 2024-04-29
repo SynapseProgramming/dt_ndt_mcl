@@ -31,21 +31,15 @@
 
 namespace ndt_2d {
 
-void ScanMatcherNDT::initialize(const std::string& name, rclcpp::Node* node,
+void ScanMatcherNDT::initialize(const std::string& name, ros::NodeHandle& node,
                                 double range_max) {
-  resolution_ = node->declare_parameter<double>(name + ".ndt_resolution", 0.25);
-
-  angular_res_ = node->declare_parameter<double>(
-      name + ".search_angular_resolution", 0.0025);
-  angular_size_ =
-      node->declare_parameter<double>(name + ".search_angular_size", 0.1);
-  linear_res_ = node->declare_parameter<double>(
-      name + ".search_linear_resolution", 0.005);
-  linear_size_ =
-      node->declare_parameter<double>(name + ".search_linear_size", 0.05);
-
-  laser_max_beams_ =
-      node->declare_parameter<int>(name + ".laser_max_beams", 100);
+  // TODO: change this to reconfigurable parameters from nodehandle
+  resolution_ = 0.25;
+  angular_res_ = 0.025;
+  angular_size_ = 0.1;
+  linear_res_ = 0.005;
+  linear_size_ = 0.05;
+  laser_max_beams_ = 100;
 
   range_max_ = range_max;
 }

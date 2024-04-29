@@ -31,26 +31,26 @@
 
 #include <tf2/utils.h>
 
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <ndt_2d/ndt_model.hpp>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <dt_ndt_mcl/ndt_model.hpp>
 
 namespace ndt_2d {
 
-inline Pose2d fromMsg(const geometry_msgs::msg::Pose& msg) {
+inline Pose2d fromMsg(const geometry_msgs::Pose& msg) {
   return Pose2d(msg.position.x, msg.position.y, tf2::getYaw(msg.orientation));
 }
 
-inline Pose2d fromMsg(const geometry_msgs::msg::PoseStamped& msg) {
+inline Pose2d fromMsg(const geometry_msgs::PoseStamped& msg) {
   return fromMsg(msg.pose);
 }
 
-inline Pose2d fromMsg(const geometry_msgs::msg::Transform& msg) {
+inline Pose2d fromMsg(const geometry_msgs::Transform& msg) {
   return Pose2d(msg.translation.x, msg.translation.y,
                 tf2::getYaw(msg.rotation));
 }
 
-inline Pose2d fromMsg(const geometry_msgs::msg::TransformStamped& msg) {
+inline Pose2d fromMsg(const geometry_msgs::TransformStamped& msg) {
   return fromMsg(msg.transform);
 }
 

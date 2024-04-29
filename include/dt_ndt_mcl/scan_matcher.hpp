@@ -26,84 +26,72 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef NDT_2D__SCAN_MATCHER_NDT_HPP_
-#define NDT_2D__SCAN_MATCHER_NDT_HPP_
+#ifndef NDT_2D__SCAN_MATCHER_HPP_
+#define NDT_2D__SCAN_MATCHER_HPP_
 
 #include <ros/ros.h>
 
-#include <dt_ndt_mcl/ndt_model.hpp>
-#include <dt_ndt_mcl/scan_matcher.hpp>
+#include <Eigen/Core>
+#include <dt_ndt_mcl/scan.hpp>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace ndt_2d {
 
-class ScanMatcherNDT : public ScanMatcher {
+class ScanMatcher {
  public:
-  virtual ~ScanMatcherNDT() = default;
+  virtual ~ScanMatcher() = default;
 
   /**
-   * @brief Initialize an NDT scan matcher instance.
+   * @brief Initialize a scan matcher instance.
    * @param name Name for ths scan matcher instance.
    * @param node Node instance to use for getting parameters.
    * @param range_max Maximum range of laser scanner.
    */
-  void initialize(const std::string& name, ros::NodeHandle& node,
-                  double range_max);
+  virtual void initialize(const std::string& name, ros::NodeHandle& node,
+                          double range_max) = 0;
 
   /**
-   * @brief Add scans to the internal NDT map.
-   * @param begin Starting iterator of scans for NDT map building.
-   * @param end Ending iterator of scans for NDT map building.
+   * @brief Add scans to the internal map.
+   * @param begin Starting iterator of scans for map building.
+   * @param end Ending iterator of scans for map building.
    */
-  void addScans(const std::vector<ScanPtr>::const_iterator& begin,
-                const std::vector<ScanPtr>::const_iterator& end);
+  virtual void addScans(const std::vector<ScanPtr>::const_iterator& begin,
+                        const std::vector<ScanPtr>::const_iterator& end) = 0;
 
   /**
-   * @brief Match a scan against the internal NDT map.
-   * @param scan Scan to match against internal NDT map.
-   * @param pose The corrected pose that best matches scan to NDT map.
+   * @brief Match a scan against the internal map.
+   * @param scan Scan to match against internal map.
+   * @param pose The corrected pose that best matches scan to map.
    * @param covariance Covariance matrix for the match.
    * @returns The score when scan is at corrected pose.
    */
-  double matchScan(const ScanPtr& scan, Pose2d& pose,
-                   Eigen::Matrix3d& covariance) const;
+  virtual double matchScan(const ScanPtr& scan, Pose2d& pose,
+                           Eigen::Matrix3d& covariance) const = 0;
 
   /**
-   * @brief Score a scan against the internal NDT map.
-   * @param scan Scan to score against internal NDT map.
+   * @brief Score a scan against the internal map.
+   * @param scan Scan to score against internal map.
    */
-  double scoreScan(const ScanPtr& scan) const;
+  virtual double scoreScan(const ScanPtr& scan) const = 0;
 
   /**
-   * @brief Score a set of points against the internal NDT map.
-   * @param points Points to score against internal NDT map.
-   * @param pose The pose of the points within the internal NDT map.
+   * @brief Score a set of points against the internal map.
+   * @param points Points to score against internal map.
+   * @param pose The pose of the points within the internal map.
    */
-  double scorePoints(const std::vector<Point>& points,
-                     const Pose2d& pose) const;
+  virtual double scorePoints(const std::vector<Point>& points,
+                             const Pose2d& pose) const = 0;
 
   /**
-   * @brief Reset the internal NDT map, removing all scans.
+   * @brief Reset the internal map, removing all scans.
    */
-  void reset();
-
- protected:
-  // Resolution of the NDT map
-  double resolution_;
-
-  // Search parameters
-  double angular_res_, angular_size_;
-  double linear_res_, linear_size_;
-  size_t laser_max_beams_;
-
-  // Max range of laser scanner
-  double range_max_;
-
-  std::unique_ptr<NDT> ndt_;
+  virtual void reset() = 0;
 };
+
+using ScanMatcherPtr = std::shared_ptr<ScanMatcher>;
 
 }  // namespace ndt_2d
 
-#endif  // NDT_2D__SCAN_MATCHER_NDT_HPP_
+#endif  // NDT_2D__SCAN_MATCHER_HPP_
