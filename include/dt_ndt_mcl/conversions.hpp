@@ -26,50 +26,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cmath>
-#include <dt_ndt_mcl/scan.hpp>
+#ifndef NDT_2D__CONVERSIONS_HPP_
+#define NDT_2D__CONVERSIONS_HPP_
+
+#include <tf2/utils.h>
+
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <ndt_2d/ndt_model.hpp>
 
 namespace ndt_2d {
 
-Scan::Scan(size_t id) : id_(id), dirty_(true) {}
-
-size_t Scan::getId() { return id_; }
-
-void Scan::setPose(const Pose2d& pose) {
-  dirty_ = true;
-  pose_ = pose;
+inline Pose2d fromMsg(const geometry_msgs::msg::Pose& msg) {
+  return Pose2d(msg.position.x, msg.position.y, tf2::getYaw(msg.orientation));
 }
 
-Pose2d Scan::getPose() { return pose_; }
-
-Pose2d Scan::getBarycenterPose() {
-  if (dirty_) update();
-  return barycenter_;
+inline Pose2d fromMsg(const geometry_msgs::msg::PoseStamped& msg) {
+  return fromMsg(msg.pose);
 }
 
-void Scan::setPoints(const std::vector<Point>& points) {
-  dirty_ = true;
-  points_ = points;
+inline Pose2d fromMsg(const geometry_msgs::msg::Transform& msg) {
+  return Pose2d(msg.translation.x, msg.translation.y,
+                tf2::getYaw(msg.rotation));
 }
 
-std::vector<Point> Scan::getPoints() { return points_; }
+inline Pose2d fromMsg(const geometry_msgs::msg::TransformStamped& msg) {
+  return fromMsg(msg.transform);
+}
 
-void Scan::update() {
-  double cos_theta = cos(pose_.theta);
-  double sin_theta = sin(pose_.theta);
-
-  // Compute the barycenter
-  barycenter_ = pose_;
-  if (!points_.empty()) {
-    Point center;
-    for (auto& point : points_) {
-      center.x += cos_theta * point.x - sin_theta * point.y;
-      center.y += sin_theta * point.x + cos_theta * point.y;
-    }
-    barycenter_.x += center.x / points_.size();
-    barycenter_.y += center.y / points_.size();
-  }
-  dirty_ = false;
+inline Eigen::Isometry3d toEigen(const Pose2d& p) {
+  return Eigen::Isometry3d(
+      Eigen::Translation3d(p.x, p.y, 0.0) *
+      Eigen::AngleAxisd(p.theta, Eigen::Vector3d::UnitZ()));
 }
 
 }  // namespace ndt_2d
+
+#endif  // NDT_2D__CONVERSIONS_HPP_
