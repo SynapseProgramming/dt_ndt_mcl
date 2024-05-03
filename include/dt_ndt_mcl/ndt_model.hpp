@@ -84,6 +84,13 @@ class NDT {
   void addScan(const ScanPtr& scan);
 
   /**
+   * @brief Add a point to the NDT.
+   * @param x The x coordinate of the point in map frame.
+   * @param y The y coordinate of the point in map frame.
+   */
+  void addPoint(double x, double y);
+
+  /**
    * @brief Compute NDT cell values - this must be called after any
    *        scans are added before you can query the cells.
    */

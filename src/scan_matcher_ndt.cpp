@@ -44,6 +44,25 @@ void ScanMatcherNDT::initialize(const std::string& name, ros::NodeHandle& node,
   range_max_ = range_max;
 }
 
+void ScanMatcherNDT::addMap(const nav_msgs::OccupancyGrid& map) {
+  double res = map.info.resolution;
+  double width = map.info.width * res;
+  double height = map.info.height * res;
+
+  ndt_ = std::make_unique<NDT>(resolution_, width, height,
+                               map.info.origin.position.x,
+                               map.info.origin.position.y);
+
+  for (int i = 0; i < map.data.size(); i++) {
+    if (map.data[i] > 0) {
+      double x = (i % map.info.width) * res + map.info.origin.position.x;
+      double y = (i / map.info.width) * res + map.info.origin.position.y;
+      ndt_->addPoint(x, y);
+    }
+  }
+  ndt_->compute();
+}
+
 void ScanMatcherNDT::addScans(const std::vector<ScanPtr>::const_iterator& begin,
                               const std::vector<ScanPtr>::const_iterator& end) {
   // Compute bounding box required

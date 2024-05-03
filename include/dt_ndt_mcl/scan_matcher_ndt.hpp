@@ -29,6 +29,7 @@
 #ifndef NDT_2D__SCAN_MATCHER_NDT_HPP_
 #define NDT_2D__SCAN_MATCHER_NDT_HPP_
 
+#include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
 
 #include <dt_ndt_mcl/ndt_model.hpp>
@@ -88,6 +89,12 @@ class ScanMatcherNDT : public ScanMatcher {
    * @brief Reset the internal NDT map, removing all scans.
    */
   void reset();
+
+  /**
+   * @brief Add a map to the NDT map.
+   * @param map The map to add to the NDT map.
+   */
+  void addMap(const nav_msgs::OccupancyGrid& map);
 
  protected:
   // Resolution of the NDT map

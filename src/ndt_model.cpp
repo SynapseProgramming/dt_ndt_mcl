@@ -131,6 +131,13 @@ void NDT::addScan(const ScanPtr& scan) {
   }
 }
 
+void NDT::addPoint(double x, double y) {
+  int index = getIndex(x, y);
+  if (index >= 0) {
+    cells_[index].addPoint(Eigen::Vector2d(x, y));
+  }
+}
+
 void NDT::compute() {
   for (auto& cell : cells_) {
     cell.compute();
