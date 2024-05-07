@@ -3,11 +3,15 @@
 
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
+#include <dt_ndt_mcl/conversions.hpp>
 #include <dt_ndt_mcl/motion_model.hpp>
 #include <dt_ndt_mcl/particle_filter.hpp>
 #include <dt_ndt_mcl/scan_matcher_ndt.hpp>
@@ -27,6 +31,9 @@ class ParticleFilter2D {
   ndt_2d::ScanMatcherNDT m_scan_matcher;
   ndt_2d::MotionModelPtr m_motion_model;
   std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
+
+  tf2_ros::Buffer m_tf_buffer;
+  tf2_ros::TransformListener m_tf_listener;
 
   ros::NodeHandle &m_nh;
   ros::NodeHandle &m_prv_nh;

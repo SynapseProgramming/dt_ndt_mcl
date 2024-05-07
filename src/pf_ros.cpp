@@ -1,7 +1,7 @@
 #include <dt_ndt_mcl/pf_ros.hpp>
 
 ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
-    : m_nh(nh), m_prv_nh(pnh) {
+    : m_nh(nh), m_prv_nh(pnh), m_tf_listener(m_tf_buffer) {
   m_scan_matcher.initialize("ndt", nh, 100.0);
   m_map_sub =
       m_prv_nh.subscribe("/map", 1, &ParticleFilter2D::mapCallback, this);
@@ -54,5 +54,22 @@ void ParticleFilter2D::initPoseCallback(
 
 void ParticleFilter2D::scanCallback(
     const sensor_msgs::LaserScan::ConstPtr& msg) {
-  std::cout << "received scan\n";
+  if (m_received_map == false) {
+    ROS_ERROR("No map received yet, ignoring scan");
+    return;
+  }
+  if (m_received_init_pose == false) {
+    ROS_ERROR("No initial pose received yet, ignoring scan");
+    return;
+  }
+  // get the robots current pose in odom frame
+  geometry_msgs::TransformStamped tf_odom_pose;
+  try {
+    tf_odom_pose =
+        m_tf_buffer.lookupTransform("odom", "base_footprint", ros::Time(0));
+  } catch (tf2::TransformException& ex) {
+    ROS_ERROR("%s", ex.what());
+    return;
+  }
+  ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
 }
