@@ -49,6 +49,20 @@ void ParticleFilter2D::initPoseCallback(
   pose_msg.header.frame_id = "map";
   m_pf->getMsg(pose_msg);
   m_pose_particle_pub.publish(pose_msg);
+
+  geometry_msgs::TransformStamped tf_odom_pose;
+  try {
+    tf_odom_pose =
+        m_tf_buffer.lookupTransform("odom", "base_footprint", ros::Time(0));
+  } catch (tf2::TransformException& ex) {
+    ROS_ERROR("%s", ex.what());
+    return;
+  }
+
+  ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
+  m_prev_robot_pose = ndt_2d::fromMsg(msg->pose.pose);
+  m_prev_odom_pose = odom_pose;
+
   m_received_init_pose = true;
 }
 

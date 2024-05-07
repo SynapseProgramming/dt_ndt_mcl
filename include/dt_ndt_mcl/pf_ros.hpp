@@ -32,6 +32,9 @@ class ParticleFilter2D {
   ndt_2d::MotionModelPtr m_motion_model;
   std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
 
+  ndt_2d::Pose2d m_prev_odom_pose;
+  ndt_2d::Pose2d m_prev_robot_pose;
+
   tf2_ros::Buffer m_tf_buffer;
   tf2_ros::TransformListener m_tf_listener;
 
