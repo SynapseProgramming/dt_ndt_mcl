@@ -3,6 +3,7 @@
 
 #include <angles/angles.h>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -45,6 +46,7 @@ class ParticleFilter2D {
   ros::Subscriber m_init_pose_sub;
   ros::Subscriber m_scan_sub;
   ros::Publisher m_pose_particle_pub;
+  ros::Publisher m_best_pose_pub;
 
   bool m_received_map;
   bool m_received_init_pose;
@@ -53,7 +55,6 @@ class ParticleFilter2D {
   double m_kld_z;
   double m_min_travel_distance;
   double m_min_travel_rotation;
-
 };
 
 #endif  // PF_ROS_HPP_

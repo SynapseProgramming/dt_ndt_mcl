@@ -16,15 +16,16 @@ ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
 
   m_scan_matcher_ptr = std::make_shared<ndt_2d::ScanMatcherNDT>();
   m_scan_matcher_ptr->initialize("ndt", nh, 100.0);
+  m_best_pose_pub = m_nh.advertise<geometry_msgs::PoseStamped>("/best_pose", 1);
 
   m_received_map = false;
   m_received_init_pose = false;
   // TODO: Add motion model alpha initialization parameters
   m_motion_model =
-      std::make_shared<ndt_2d::MotionModel>(0.2, 0.2, 0.2, 0.2, 0.2);
+      std::make_shared<ndt_2d::MotionModel>(0.1, 0.1, 0.1, 0.1, 0.1);
 
-  size_t min_particles = 100;
-  size_t max_particles = 1000;
+  size_t min_particles = 500;
+  size_t max_particles = 2000;
   m_kld_err = 0.01;
   m_kld_z = 0.99;
 
@@ -183,4 +184,13 @@ void ParticleFilter2D::scanCallback(
 
   m_prev_robot_pose = scan->getPose();
   m_prev_odom_pose = odom_pose;
+
+  // publish best pose
+  geometry_msgs::PoseStamped best_pose_msg;
+  best_pose_msg.header.frame_id = "map";
+  best_pose_msg.pose.position.x = mean(0);
+  best_pose_msg.pose.position.y = mean(1);
+  best_pose_msg.pose.orientation.z = std::sin(mean(2) / 2.0);
+  best_pose_msg.pose.orientation.w = std::cos(mean(2) / 2.0);
+  m_best_pose_pub.publish(best_pose_msg);
 }
