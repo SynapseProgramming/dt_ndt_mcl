@@ -10,8 +10,10 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  nav_msgs
   geometry_msgs
   tf2
+  tf2_ros
 )
 
 find_package(Eigen3 REQUIRED)
@@ -27,7 +29,7 @@ include_directories(
 )
 
 
-add_executable(pf_node src/ndt_model.cpp src/pf_ros_node.cpp src/pf_ros src/scan.cpp src/scan_matcher_ndt.cpp)
+add_executable(pf_node src/ndt_model.cpp src/pf_ros_node.cpp src/pf_ros src/scan.cpp src/scan_matcher_ndt.cpp src/motion_model.cpp src/particle_filter.cpp)
 target_link_libraries(pf_node ${catkin_LIBRARIES})
 
 
