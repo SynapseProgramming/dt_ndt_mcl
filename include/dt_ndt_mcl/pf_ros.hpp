@@ -29,7 +29,7 @@ class ParticleFilter2D {
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
 
  private:
-  ndt_2d::ScanMatcherNDT m_scan_matcher;
+  std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
   ndt_2d::MotionModelPtr m_motion_model;
   std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
 
@@ -48,10 +48,12 @@ class ParticleFilter2D {
 
   bool m_received_map;
   bool m_received_init_pose;
+  int m_scan_id;
   double m_kld_err;
   double m_kld_z;
   double m_min_travel_distance;
   double m_min_travel_rotation;
+
 };
 
 #endif  // PF_ROS_HPP_
