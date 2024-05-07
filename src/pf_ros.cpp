@@ -28,6 +28,9 @@ ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
 
   m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
                                                   m_motion_model);
+
+  m_min_travel_distance = 0.1;
+  m_min_travel_rotation = 0.5;
 }
 
 void ParticleFilter2D::mapCallback(
@@ -86,4 +89,27 @@ void ParticleFilter2D::scanCallback(
     return;
   }
   ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
+  ndt_2d::Pose2d robot_pose;
+
+  // ensure that enough distance has been travelled
+  // Calculate delta in odometry frame
+  double dx = odom_pose.x - m_prev_odom_pose.x;
+  double dy = odom_pose.y - m_prev_odom_pose.y;
+  double dth = angles::shortest_angular_distance(m_prev_odom_pose.theta,
+                                                 odom_pose.theta);
+  double dist = (dx * dx) + (dy * dy);
+  if (dist < m_min_travel_distance * m_min_travel_distance &&
+      std::fabs(dth) < m_min_travel_rotation) {
+    return;
+  }
+
+  // Odometry frame is usually not aligned with map frame
+  double heading = angles::shortest_angular_distance(m_prev_odom_pose.theta,
+                                                     m_prev_robot_pose.theta);
+
+  // Now apply odometry delta, corrected by heading, to get initial corrected
+  // pose
+  robot_pose.x = prev_robot_pose_.x + (dx * cos(heading)) - (dy * sin(heading));
+  robot_pose.y = prev_robot_pose_.y + (dx * sin(heading)) + (dy * cos(heading));
+  robot_pose.theta = angles::normalize_angle(prev_robot_pose_.theta + dth);
 }

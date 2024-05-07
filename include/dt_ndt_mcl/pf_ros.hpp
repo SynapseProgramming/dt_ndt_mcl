@@ -1,6 +1,7 @@
 #ifndef PF_ROS_HPP_
 #define PF_ROS_HPP_
 
+#include <angles/angles.h>
 #include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -49,6 +50,8 @@ class ParticleFilter2D {
   bool m_received_init_pose;
   double m_kld_err;
   double m_kld_z;
+  double m_min_travel_distance;
+  double m_min_travel_rotation;
 };
 
 #endif  // PF_ROS_HPP_
