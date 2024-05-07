@@ -27,22 +27,21 @@
  */
 
 #include <angles/angles.h>
-#include <random>
-#include <dt_ndt_mcl/particle_filter.hpp>
 
-namespace ndt_2d
-{
+#include <dt_ndt_mcl/particle_filter.hpp>
+#include <random>
+
+namespace ndt_2d {
 
 ParticleFilter::ParticleFilter(size_t min_particles, size_t max_particles,
-    MotionModelPtr & motion_model)
-: gen_(random_()),
-  motion_model_(motion_model),
-  min_particles_(min_particles),
-  max_particles_(max_particles),
-  mean_(Eigen::Vector3d::Zero()),
-  cov_(Eigen::Matrix3d::Zero()),
-  kd_tree_(0.5, 0.5, 0.2671, max_particles)
-{
+                               MotionModelPtr& motion_model)
+    : gen_(random_()),
+      motion_model_(motion_model),
+      min_particles_(min_particles),
+      max_particles_(max_particles),
+      mean_(Eigen::Vector3d::Zero()),
+      cov_(Eigen::Matrix3d::Zero()),
+      kd_tree_(0.5, 0.5, 0.2671, max_particles) {
   particles_.reserve(max_particles_);
   weights_.reserve(max_particles_);
   particles_.assign(min_particles_, Particle(0.0, 0.0, 0.0));
@@ -51,14 +50,13 @@ ParticleFilter::ParticleFilter(size_t min_particles, size_t max_particles,
 }
 
 void ParticleFilter::init(const double x, const double y, const double theta,
-                          const double sigma_x, const double sigma_y, const double sigma_theta)
-{
+                          const double sigma_x, const double sigma_y,
+                          const double sigma_theta) {
   std::normal_distribution<float> sample_x(x, sigma_x);
   std::normal_distribution<float> sample_y(y, sigma_y);
   std::normal_distribution<float> sample_theta(theta, sigma_theta);
 
-  for (auto & particle : particles_)
-  {
+  for (auto& particle : particles_) {
     particle(0) = sample_x(gen_);
     particle(1) = sample_y(gen_);
     particle(2) = angles::normalize_angle(sample_theta(gen_));
@@ -68,18 +66,16 @@ void ParticleFilter::init(const double x, const double y, const double theta,
   updateStatistics();
 }
 
-void ParticleFilter::update(const double dx, const double dy, const double dth)
-{
+void ParticleFilter::update(const double dx, const double dy,
+                            const double dth) {
   // Apply control update
   motion_model_->sample(dx, dy, dth, particles_);
   updateStatistics();
 }
 
-void ParticleFilter::measure(const ScanMatcherPtr & matcher,
-                             const ScanPtr & scan)
-{
-  for (size_t i = 0; i < particles_.size(); ++i)
-  {
+void ParticleFilter::measure(const ScanMatcherPtr& matcher,
+                             const ScanPtr& scan) {
+  for (size_t i = 0; i < particles_.size(); ++i) {
     // Pose of this particle in NDT format
     Pose2d pose(particles_[i](0), particles_[i](1), particles_[i](2));
     // Compute the score, ignoring the scan->pose
@@ -88,8 +84,7 @@ void ParticleFilter::measure(const ScanMatcherPtr & matcher,
   updateStatistics();
 }
 
-void ParticleFilter::resample(const double kld_err, const double kld_z)
-{
+void ParticleFilter::resample(const double kld_err, const double kld_z) {
   // Sampling particles based on current weights
   std::discrete_distribution<size_t> d(weights_.begin(), weights_.end());
 
@@ -105,9 +100,9 @@ void ParticleFilter::resample(const double kld_err, const double kld_z)
   // This will be the crazy equation from Probabilistic Robotics
   size_t Mx = max_particles_;
 
-  while (resampled.size() < std::max(min_particles_, Mx))
-  {
-    // Sample a particle - NOTE: KLD paper says we should apply motion model & update here?
+  while (resampled.size() < std::max(min_particles_, Mx)) {
+    // Sample a particle - NOTE: KLD paper says we should apply motion model &
+    // update here?
     size_t p = d(gen_);
     kd_tree_.insert(particles_[p], weights_[p]);
     resampled.push_back(particles_[p]);
@@ -115,8 +110,7 @@ void ParticleFilter::resample(const double kld_err, const double kld_z)
 
     // Recompute crazy equation
     size_t k = kd_tree_.getLeafCount();
-    if (k > 1)
-    {
+    if (k > 1) {
       double a = (k - 1) / (2.0 * kld_err);
       double b = 2.0 / (9.0 * (k - 1));
       double c = 1.0 - b + std::sqrt(b) * kld_z;
@@ -124,8 +118,7 @@ void ParticleFilter::resample(const double kld_err, const double kld_z)
     }
 
     // Never exceed max particles
-    if (resampled.size() >= max_particles_)
-    {
+    if (resampled.size() >= max_particles_) {
       break;
     }
   }
@@ -136,21 +129,13 @@ void ParticleFilter::resample(const double kld_err, const double kld_z)
   updateStatistics();
 }
 
-Eigen::Vector3d ParticleFilter::getMean()
-{
-  return mean_;
-}
+Eigen::Vector3d ParticleFilter::getMean() { return mean_; }
 
-Eigen::Matrix3d ParticleFilter::getCovariance()
-{
-  return cov_;
-}
+Eigen::Matrix3d ParticleFilter::getCovariance() { return cov_; }
 
-void ParticleFilter::getMsg(geometry_msgs::PoseArray & msg)
-{
+void ParticleFilter::getMsg(geometry_msgs::PoseArray& msg) {
   msg.poses.reserve(particles_.size());
-  for (auto & particle : particles_)
-  {
+  for (auto& particle : particles_) {
     geometry_msgs::Pose pose;
     pose.position.x = particle(0);
     pose.position.y = particle(1);
@@ -160,16 +145,13 @@ void ParticleFilter::getMsg(geometry_msgs::PoseArray & msg)
   }
 }
 
-void ParticleFilter::updateStatistics()
-{
+void ParticleFilter::updateStatistics() {
   // Recompute weights to sum to 1.0
   double sum_weight = 0.0;
-  for (auto & w : weights_)
-  {
+  for (auto& w : weights_) {
     sum_weight += w;
   }
-  for (auto & w : weights_)
-  {
+  for (auto& w : weights_) {
     w /= sum_weight;
   }
 
@@ -179,16 +161,13 @@ void ParticleFilter::updateStatistics()
   // Use circular mean for theta
   double sum_cos_th = 0.0, sum_sin_th = 0.0;
 
-  for (size_t i = 0; i < particles_.size(); ++i)
-  {
+  for (size_t i = 0; i < particles_.size(); ++i) {
     mean += weights_[i] * particles_[i];
     sum_cos_th += weights_[i] * cos(particles_[i](2));
     sum_sin_th += weights_[i] * sin(particles_[i](2));
 
-    for (size_t j = 0; j < 2; ++j)
-    {
-      for (size_t k = j; k < 2; ++k)
-      {
+    for (size_t j = 0; j < 2; ++j) {
+      for (size_t k = j; k < 2; ++k) {
         corr(j, k) += weights_[i] * particles_[i](j) * particles_[i](k);
       }
     }
@@ -200,18 +179,16 @@ void ParticleFilter::updateStatistics()
   mean_(2) = atan2(sum_sin_th, sum_cos_th);
 
   // Compute covariance for x/y
-  for (size_t j = 0; j < 2; ++j)
-  {
-    for (size_t k = j; k < 2; ++k)
-    {
+  for (size_t j = 0; j < 2; ++j) {
+    for (size_t k = j; k < 2; ++k) {
       cov_(j, k) = corr(j, k) - mean(j) * mean(k);
       cov_(k, j) = cov_(j, k);
     }
   }
+  cov_(2, 2) = 0.0;
 
   // Compute covariance for theta
-  for (size_t i = 0; i < particles_.size(); ++i)
-  {
+  for (size_t i = 0; i < particles_.size(); ++i) {
     double d = angles::shortest_angular_distance(particles_[i](2), mean_(2));
     cov_(2, 2) += weights_[i] * d * d;
   }

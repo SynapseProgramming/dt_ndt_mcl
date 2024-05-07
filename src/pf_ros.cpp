@@ -168,8 +168,8 @@ void ParticleFilter2D::scanCallback(
   robot_delta(2) = angles::shortest_angular_distance(m_prev_robot_pose.theta,
                                                      scan->getPose().theta);
 
-  ROS_INFO("Updating filter with control %f %f %f", robot_delta(0),
-           robot_delta(1), robot_delta(2));
+  // ROS_INFO("Updating filter with control %f %f %f", robot_delta(0),
+  //          robot_delta(1), robot_delta(2));
 
   m_pf->update(robot_delta(0), robot_delta(1), robot_delta(2));
   m_pf->measure(m_scan_matcher_ptr, scan);
@@ -193,4 +193,15 @@ void ParticleFilter2D::scanCallback(
   best_pose_msg.pose.orientation.z = std::sin(mean(2) / 2.0);
   best_pose_msg.pose.orientation.w = std::cos(mean(2) / 2.0);
   m_best_pose_pub.publish(best_pose_msg);
+  // display trace
+  ROS_INFO("Trace: %f", computeTrace());
+}
+
+double ParticleFilter2D::computeTrace() {
+  Eigen::Matrix3d cov_matrix = m_pf->getCovariance();
+  double trace = 0.0;
+  for (int i = 0; i < 3; i++) {
+    trace += cov_matrix(i, i);
+  }
+  return trace;
 }

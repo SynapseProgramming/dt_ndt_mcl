@@ -29,6 +29,8 @@ class ParticleFilter2D {
 
   void scanCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
 
+  double computeTrace();
+
  private:
   std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
   ndt_2d::MotionModelPtr m_motion_model;
