@@ -12,6 +12,9 @@ ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
   m_init_pose_sub = m_prv_nh.subscribe(
       "/initialpose", 1, &ParticleFilter2D::initPoseCallback, this);
 
+  m_scan_sub = m_prv_nh.subscribe("/scan_front", 1,
+                                  &ParticleFilter2D::scanCallback, this);
+
   m_received_map = false;
   m_received_init_pose = false;
   // TODO: Add motion model alpha initialization parameters
@@ -47,4 +50,9 @@ void ParticleFilter2D::initPoseCallback(
   m_pf->getMsg(pose_msg);
   m_pose_particle_pub.publish(pose_msg);
   m_received_init_pose = true;
+}
+
+void ParticleFilter2D::scanCallback(
+    const sensor_msgs::LaserScan::ConstPtr& msg) {
+  std::cout << "received scan\n";
 }
