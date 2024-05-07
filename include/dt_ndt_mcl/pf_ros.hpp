@@ -1,8 +1,11 @@
 #ifndef PF_ROS_HPP_
 #define PF_ROS_HPP_
 
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseArray.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <ros/ros.h>
+#include <tf2/utils.h>
 
 #include <dt_ndt_mcl/motion_model.hpp>
 #include <dt_ndt_mcl/particle_filter.hpp>
@@ -14,6 +17,8 @@ class ParticleFilter2D {
   ParticleFilter2D(ros::NodeHandle &nh, ros::NodeHandle &pnh);
 
   void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+  void initPoseCallback(
+      const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
 
  private:
   ndt_2d::ScanMatcherNDT m_scan_matcher;
@@ -23,8 +28,11 @@ class ParticleFilter2D {
   ros::NodeHandle &m_nh;
   ros::NodeHandle &m_prv_nh;
   ros::Subscriber m_map_sub;
+  ros::Subscriber m_init_pose_sub;
+  ros::Publisher m_pose_particle_pub;
 
-  bool m_received_map; 
+  bool m_received_map;
+  bool m_received_init_pose;
   double m_kld_err;
   double m_kld_z;
 };
