@@ -34,12 +34,12 @@ namespace ndt_2d {
 void ScanMatcherNDT::initialize(const std::string& name, ros::NodeHandle& node,
                                 double range_max) {
   // TODO: change this to reconfigurable parameters from nodehandle
-  resolution_ = 0.25;
+  resolution_ = 0.4;
   angular_res_ = 0.025;
   angular_size_ = 0.1;
   linear_res_ = 0.005;
   linear_size_ = 0.05;
-  laser_max_beams_ = 100;
+  laser_max_beams_ = 1000;
 
   range_max_ = range_max;
 }
