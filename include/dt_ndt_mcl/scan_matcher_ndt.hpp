@@ -96,6 +96,8 @@ class ScanMatcherNDT : public ScanMatcher {
    */
   void addMap(const nav_msgs::OccupancyGrid& map);
 
+  void updateLocalMap(const ScanPtr& scan);
+
  protected:
   // Resolution of the NDT map
   double resolution_;
@@ -109,6 +111,8 @@ class ScanMatcherNDT : public ScanMatcher {
   double range_max_;
 
   std::unique_ptr<NDT> ndt_;
+
+  std::unique_ptr<NDT> m_local_map;
 };
 
 }  // namespace ndt_2d

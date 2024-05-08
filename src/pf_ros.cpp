@@ -193,8 +193,12 @@ void ParticleFilter2D::scanCallback(
   best_pose_msg.pose.orientation.z = std::sin(mean(2) / 2.0);
   best_pose_msg.pose.orientation.w = std::cos(mean(2) / 2.0);
   m_best_pose_pub.publish(best_pose_msg);
-  // display trace
-  ROS_INFO("Trace: %f", computeTrace());
+
+  double current_trace = computeTrace();
+  if (current_trace < 0.02) {
+    ROS_INFO("updating local map!");
+    m_scan_matcher_ptr->updateLocalMap(scan);
+  }
 }
 
 double ParticleFilter2D::computeTrace() {

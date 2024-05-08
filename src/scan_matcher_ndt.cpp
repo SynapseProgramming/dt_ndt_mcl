@@ -63,6 +63,19 @@ void ScanMatcherNDT::addMap(const nav_msgs::OccupancyGrid& map) {
   ndt_->compute();
 }
 
+void ScanMatcherNDT::updateLocalMap(const ScanPtr& scan) {
+  double max_range = 30.0;
+  Pose2d pose = scan->getPose();
+  double min_x = pose.x - max_range;
+  double max_x = pose.x + max_range;
+  double min_y = pose.y - max_range;
+  double max_y = pose.y + max_range;
+  m_local_map.reset(
+      new NDT(resolution_, (max_x - min_x), (max_y - min_y), min_x, min_y));
+  m_local_map->addScan(scan);
+  m_local_map->compute();
+}
+
 void ScanMatcherNDT::addScans(const std::vector<ScanPtr>::const_iterator& begin,
                               const std::vector<ScanPtr>::const_iterator& end) {
   // Compute bounding box required
@@ -177,7 +190,14 @@ double ScanMatcherNDT::scorePoints(const std::vector<Point>& points,
     size_t scan_idx = static_cast<size_t>(i * scan_step);
     Eigen::Vector3d p(points[scan_idx].x, points[scan_idx].y, 1.0);
     p = t * p;
-    score += -ndt_->likelihood(p);
+    double static_map_likelihood = ndt_->likelihood(p);
+    // TODO: add this as a reconfigurable parameter
+    if (m_local_map != nullptr && static_map_likelihood <= 0.4) {
+      double local_map_likelihood = m_local_map->likelihood(p);
+      score += -local_map_likelihood;
+    } else {
+      score += -static_map_likelihood;
+    }
   }
 
   return score / scan_points_to_use;
