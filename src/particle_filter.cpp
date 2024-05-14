@@ -133,10 +133,10 @@ Eigen::Vector3d ParticleFilter::getMean() { return mean_; }
 
 Eigen::Matrix3d ParticleFilter::getCovariance() { return cov_; }
 
-void ParticleFilter::getMsg(geometry_msgs::PoseArray& msg) {
+void ParticleFilter::getMsg(geometry_msgs::msg::PoseArray & msg) {
   msg.poses.reserve(particles_.size());
   for (auto& particle : particles_) {
-    geometry_msgs::Pose pose;
+    geometry_msgs::msg::Pose pose;
     pose.position.x = particle(0);
     pose.position.y = particle(1);
     pose.orientation.z = sin(particle(2) / 2.0);

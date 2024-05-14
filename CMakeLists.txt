@@ -1,50 +1,55 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.8)
 project(dt_ndt_mcl)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
-## Find catkin macros and libraries
-## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  sensor_msgs
-  nav_msgs
-  geometry_msgs
-  tf2
-  tf2_ros
-)
-
+# find dependencies
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2 REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(angles REQUIRED) 
 
 
-
-catkin_package()
-
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIRS} 
-    "${PROJECT_SOURCE_DIR}/include"
-)
-
-
-add_executable(pf_node src/ndt_model.cpp src/pf_ros_node.cpp src/pf_ros src/scan.cpp src/scan_matcher_ndt.cpp src/motion_model.cpp src/particle_filter.cpp)
-target_link_libraries(pf_node ${catkin_LIBRARIES})
+add_executable(dt_ndt_mcl_node src/pf_ros.cpp src/scan_matcher_ndt.cpp src/pf_ros_node.cpp src/particle_filter.cpp src/ndt_model.cpp src/motion_model.cpp src/scan.cpp)
+ament_target_dependencies(dt_ndt_mcl_node rclcpp sensor_msgs nav_msgs geometry_msgs tf2_ros tf2 angles Eigen3)
+target_include_directories(dt_ndt_mcl_node
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    ${EIGEN3_INCLUDE_DIR}
+    )
 
 
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  PATTERN ".svn" EXCLUDE
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint (only works in a git repo)
+  # comment the line when this package is in a git repo and when
+  # a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
 
 install(
-  TARGETS
-  pf_node
-  RUNTIME DESTINATION
-    ${CATKIN_PACKAGE_BIN_DESTINATION}
+  DIRECTORY include/
+  DESTINATION include
 )
 
+install(TARGETS
+  dt_ndt_mcl_node
+  DESTINATION lib/${PROJECT_NAME})
 
+
+
+ament_package()
 
