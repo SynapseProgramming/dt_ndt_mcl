@@ -24,7 +24,7 @@ class ParticleFilter2D : public rclcpp::Node
 public:
   ParticleFilter2D();
 
-  // void mapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg);
+  void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
   // void initPoseCallback(
   //     const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg);
 
@@ -33,7 +33,7 @@ public:
   // double computeTrace();
 
 private:
-  // std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
+  std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
   // ndt_2d::MotionModelPtr m_motion_model;
   // std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
 
@@ -48,10 +48,12 @@ private:
   // ros::Subscriber m_map_sub;
   // ros::Subscriber m_init_pose_sub;
   // ros::Subscriber m_scan_sub;
-  // ros::Publisher m_pose_particle_pub;
-  // ros::Publisher m_best_pose_pub;
 
-  // bool m_received_map;
+  rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_map_sub;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr m_best_pose_pub;
+  rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pose_particle_pub;
+
+  bool m_received_map;
   // bool m_received_init_pose;
   // int m_scan_id;
   // double m_kld_err;

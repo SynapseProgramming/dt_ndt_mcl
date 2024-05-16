@@ -1,9 +1,16 @@
 #include <dt_ndt_mcl/pf_ros.hpp>
 
-ParticleFilter2D::ParticleFilter2D(): Node("dt_ndt_mcl_node")
+ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
 {
+  auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).transient_local();
+  m_pose_particle_pub = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloudz", 1);
+  m_best_pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("/best_pose", 1);
+  m_map_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", qos, std::bind(&ParticleFilter2D::mapCallback, this, std::placeholders::_1));
 
-  std::cout << "ParticleFilter2D constructor" << std::endl;
+  m_scan_matcher_ptr = std::make_shared<ndt_2d::ScanMatcherNDT>();
+  m_scan_matcher_ptr->initialize("ndt", this, 100.0);
+
+  m_received_map = false;
 }
 
 // ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
@@ -44,12 +51,14 @@ ParticleFilter2D::ParticleFilter2D(): Node("dt_ndt_mcl_node")
 //   m_scan_id = 0;
 // }
 
-// void ParticleFilter2D::mapCallback(
-//     const nav_msgs::OccupancyGrid::ConstPtr& msg) {
-//   m_scan_matcher_ptr->addMap(*msg);
-//   std::cout << "Map received" << std::endl;
-//   m_received_map = true;
-// }
+void ParticleFilter2D::mapCallback(
+    const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
+{
+
+  m_scan_matcher_ptr->addMap(*msg);
+  RCLCPP_INFO(this->get_logger(), "Map received");
+  m_received_map = true;
+}
 
 // void ParticleFilter2D::initPoseCallback(
 //     const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
