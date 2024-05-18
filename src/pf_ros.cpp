@@ -223,11 +223,13 @@ void ParticleFilter2D::initPoseCallback(const geometry_msgs::msg::PoseWithCovari
 //   }
 // }
 
-// double ParticleFilter2D::computeTrace() {
-//   Eigen::Matrix3d cov_matrix = m_pf->getCovariance();
-//   double trace = 0.0;
-//   for (int i = 0; i < 3; i++) {
-//     trace += cov_matrix(i, i);
-//   }
-//   return trace;
-// }
+double ParticleFilter2D::computeTrace()
+{
+  Eigen::Matrix3d cov_matrix = m_pf->getCovariance();
+  double trace = 0.0;
+  for (int i = 0; i < 3; i++)
+  {
+    trace += cov_matrix(i, i);
+  }
+  return trace;
+}

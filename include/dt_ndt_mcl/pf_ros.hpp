@@ -32,7 +32,7 @@ public:
 
   // void scanCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
 
-  // double computeTrace();
+  double computeTrace();
 
 private:
   std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
@@ -45,8 +45,6 @@ private:
   std::unique_ptr<tf2_ros::Buffer> m_tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> m_tf_listener{nullptr};
 
-  // ros::NodeHandle &m_nh;
-  // ros::NodeHandle &m_prv_nh;
   // ros::Subscriber m_map_sub;
   // ros::Subscriber m_scan_sub;
 
