@@ -3,52 +3,50 @@
 ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
 {
   auto qos = rclcpp::QoS(rclcpp::KeepLast(10)).transient_local();
+  auto durability_qos = rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile();
+
   m_pose_particle_pub = this->create_publisher<geometry_msgs::msg::PoseArray>("/particlecloudz", 1);
   m_best_pose_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>("/best_pose", 1);
   m_map_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", qos, std::bind(&ParticleFilter2D::mapCallback, this, std::placeholders::_1));
+  m_init_pose_sub = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", durability_qos, std::bind(&ParticleFilter2D::initPoseCallback, this, std::placeholders::_1));
+
+  m_tf_buffer =
+      std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  m_tf_listener =
+      std::make_shared<tf2_ros::TransformListener>(*m_tf_buffer);
+
+  // TODO: Add reconfigurable parameters
 
   m_scan_matcher_ptr = std::make_shared<ndt_2d::ScanMatcherNDT>();
   m_scan_matcher_ptr->initialize("ndt", this, 100.0);
 
+  m_motion_model =
+      std::make_shared<ndt_2d::MotionModel>(0.1, 0.1, 0.1, 0.1, 0.1);
+
   m_received_map = false;
+  m_received_init_pose = false;
+
+  m_kld_err = 0.01;
+  m_kld_z = 0.99;
+
+  size_t min_particles = 500;
+  size_t max_particles = 2000;
+  m_min_travel_distance = 0.1;
+  m_min_travel_rotation = 0.5;
+
+  m_scan_id = 0;
+  m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
+                                                  m_motion_model);
 }
 
 // ParticleFilter2D::ParticleFilter2D(ros::NodeHandle& nh, ros::NodeHandle& pnh)
 //     : m_nh(nh), m_prv_nh(pnh), m_tf_listener(m_tf_buffer) {
-//   m_map_sub =
-//       m_prv_nh.subscribe("/map", 1, &ParticleFilter2D::mapCallback, this);
-
-//   m_pose_particle_pub =
-//       m_nh.advertise<geometry_msgs::PoseArray>("/particlecloudz", 1);
-
-//   m_init_pose_sub = m_prv_nh.subscribe(
-//       "/initialpose", 1, &ParticleFilter2D::initPoseCallback, this);
 
 //   m_scan_sub = m_prv_nh.subscribe("/scan_front", 1,
 //                                   &ParticleFilter2D::scanCallback, this);
 
-//   m_scan_matcher_ptr = std::make_shared<ndt_2d::ScanMatcherNDT>();
-//   m_scan_matcher_ptr->initialize("ndt", nh, 100.0);
-//   m_best_pose_pub = m_nh.advertise<geometry_msgs::PoseStamped>("/best_pose", 1);
-
-//   m_received_map = false;
-//   m_received_init_pose = false;
 //   // TODO: Add motion model alpha initialization parameters
-//   m_motion_model =
-//       std::make_shared<ndt_2d::MotionModel>(0.1, 0.1, 0.1, 0.1, 0.1);
 
-//   size_t min_particles = 500;
-//   size_t max_particles = 2000;
-//   m_kld_err = 0.01;
-//   m_kld_z = 0.99;
-
-//   m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
-//                                                   m_motion_model);
-
-//   m_min_travel_distance = 0.1;
-//   m_min_travel_rotation = 0.5;
-
-//   m_scan_id = 0;
 // }
 
 void ParticleFilter2D::mapCallback(
@@ -60,34 +58,43 @@ void ParticleFilter2D::mapCallback(
   m_received_map = true;
 }
 
-// void ParticleFilter2D::initPoseCallback(
-//     const geometry_msgs::PoseWithCovarianceStamped::ConstPtr& msg) {
-//   std::cout << "received initial pose!\n";
-//   m_pf->init(msg->pose.pose.position.x, msg->pose.pose.position.y,
-//              tf2::getYaw(msg->pose.pose.orientation),
-//              sqrt(msg->pose.covariance[0]), sqrt(msg->pose.covariance[7]),
-//              sqrt(msg->pose.covariance[35]));
+void ParticleFilter2D::initPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+{
 
-//   geometry_msgs::PoseArray pose_msg;
-//   pose_msg.header.frame_id = "map";
-//   m_pf->getMsg(pose_msg);
-//   m_pose_particle_pub.publish(pose_msg);
+  std::cout << "received initial pose!\n";
+  m_pf->init(msg->pose.pose.position.x, msg->pose.pose.position.y,
+             tf2::getYaw(msg->pose.pose.orientation),
+             sqrt(msg->pose.covariance[0]), sqrt(msg->pose.covariance[7]),
+             sqrt(msg->pose.covariance[35]));
 
-//   geometry_msgs::TransformStamped tf_odom_pose;
-//   try {
-//     tf_odom_pose =
-//         m_tf_buffer.lookupTransform("odom", "base_footprint", ros::Time(0));
-//   } catch (tf2::TransformException& ex) {
-//     ROS_ERROR("%s", ex.what());
-//     return;
-//   }
+  geometry_msgs::msg::PoseArray pose_msg;
+  pose_msg.header.frame_id = "map";
+  m_pf->getMsg(pose_msg);
+  m_pose_particle_pub->publish(pose_msg);
 
-//   ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
-//   m_prev_robot_pose = ndt_2d::fromMsg(msg->pose.pose);
-//   m_prev_odom_pose = odom_pose;
+  geometry_msgs::msg::TransformStamped tf_odom_pose;
+  std::string odomFrame = "odom";
+  std::string baseFrame = "base_footprint";
 
-//   m_received_init_pose = true;
-// }
+  try
+  {
+    tf_odom_pose =
+        m_tf_buffer->lookupTransform(odomFrame, baseFrame, tf2::TimePointZero);
+  }
+  catch (tf2::TransformException &ex)
+  {
+    RCLCPP_INFO(
+        this->get_logger(), "Could not transform %s to %s: %s",
+        baseFrame.c_str(), odomFrame.c_str(), ex.what());
+    return;
+  }
+
+  ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
+  m_prev_robot_pose = ndt_2d::fromMsg(msg->pose.pose);
+  m_prev_odom_pose = odom_pose;
+
+  m_received_init_pose = true;
+}
 
 // void ParticleFilter2D::scanCallback(
 //     const sensor_msgs::LaserScan::ConstPtr& msg) {
