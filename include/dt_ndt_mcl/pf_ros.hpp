@@ -30,11 +30,12 @@ public:
 
   void initPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
-  // void scanCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
+  void scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 
   double computeTrace();
 
 private:
+
   std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
   ndt_2d::MotionModelPtr m_motion_model;
   std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
@@ -45,11 +46,9 @@ private:
   std::unique_ptr<tf2_ros::Buffer> m_tf_buffer;
   std::shared_ptr<tf2_ros::TransformListener> m_tf_listener{nullptr};
 
-  // ros::Subscriber m_map_sub;
-  // ros::Subscriber m_scan_sub;
-
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_map_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_init_pose_sub;
+  rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_scan_sub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr m_best_pose_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pose_particle_pub;
 
