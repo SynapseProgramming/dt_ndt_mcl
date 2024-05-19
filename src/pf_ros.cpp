@@ -33,7 +33,7 @@ ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
   size_t min_particles = 500;
   size_t max_particles = 2000;
   m_min_travel_distance = 0.1;
-  m_min_travel_rotation = 0.5;
+  m_min_travel_rotation = 0.25;
 
   m_scan_id = 0;
   m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
@@ -197,6 +197,8 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
               robot_delta(1), robot_delta(2));
   // previous pose theta print
   RCLCPP_INFO(this->get_logger(), "Previous pose theta: %f", m_prev_odom_pose.theta);
+
+  std::cout << "dx: " << dx << " dy: " << dy << " dth: " << dth << std::endl;
 
   m_pf->update(dx, dy, dth, m_prev_robot_pose);
   m_pf->measure(m_scan_matcher_ptr, scan);
