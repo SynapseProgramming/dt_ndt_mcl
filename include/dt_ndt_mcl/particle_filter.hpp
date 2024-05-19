@@ -67,8 +67,9 @@ namespace ndt_2d
      * @param dx Distance traveled in the X direction, in robot centric frame.
      * @param dy Distance traveled in the Y direction, in robot centric frame.
      * @param dth Change in angular orientation, in robot centric frame.
+     * @param prev_pose The previous pose of the robot.
      */
-    void update(const double dx, const double dy, const double dth);
+    void update(const double dx, const double dy, const double dth, Pose2d &prev_pose);
 
     /**
      * @brief Apply a measurement update.

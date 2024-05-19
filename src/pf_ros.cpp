@@ -27,7 +27,7 @@ ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
   m_received_map = false;
   m_received_init_pose = false;
 
-  m_kld_err = 0.01;
+  m_kld_err = 0.05;
   m_kld_z = 0.99;
 
   size_t min_particles = 500;
@@ -193,10 +193,12 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
   robot_delta(2) = angles::shortest_angular_distance(m_prev_robot_pose.theta,
                                                      scan->getPose().theta);
 
-  // ROS_INFO("Updating filter with control %f %f %f", robot_delta(0),
-  //          robot_delta(1), robot_delta(2));
+  RCLCPP_INFO(this->get_logger(), "Updating filter with control %f %f %f", robot_delta(0),
+              robot_delta(1), robot_delta(2));
+  // previous pose theta print
+  RCLCPP_INFO(this->get_logger(), "Previous pose theta: %f", m_prev_odom_pose.theta);
 
-  m_pf->update(robot_delta(0), robot_delta(1), robot_delta(2));
+  m_pf->update(dx, dy, dth, m_prev_robot_pose);
   m_pf->measure(m_scan_matcher_ptr, scan);
   m_pf->resample(m_kld_err, m_kld_z);
   auto mean = m_pf->getMean();

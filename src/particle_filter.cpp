@@ -67,9 +67,9 @@ void ParticleFilter::init(const double x, const double y, const double theta,
 }
 
 void ParticleFilter::update(const double dx, const double dy,
-                            const double dth) {
+                            const double dth, Pose2d& prev_pose) {
   // Apply control update
-  motion_model_->sample(dx, dy, dth, particles_);
+  motion_model_->sample(dx, dy, dth, prev_pose, particles_);
   updateStatistics();
 }
 
