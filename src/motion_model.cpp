@@ -42,7 +42,7 @@ namespace ndt_2d
   // deviation sigma.
   // We use the polar form of the Box-Muller transformation, explained here:
   //   http://www.taygeta.com/random/gaussian.html
-  double pf_ran_gaussian(double sigma)
+  double MotionModel::pf_ran_gaussian(double sigma)
   {
     double x1, x2, w, r;
 
@@ -65,7 +65,7 @@ namespace ndt_2d
   }
 
   MotionModel::MotionModel(double a1, double a2, double a3, double a4, double a5)
-      : a1_(a1), a2_(a2), a3_(a3), a4_(a4), a5_(a5), gen_(random_()) {}
+      : a1_(a1), a2_(a2), a3_(a3), a4_(a4), a5_(a5) {}
 
   void MotionModel::sample(const double dx, const double dy, const double dth, Pose2d &prev_pose,
                            std::vector<Eigen::Vector3d> &poses)
@@ -73,7 +73,6 @@ namespace ndt_2d
     // Decompose relative motion
     double trans = std::hypot(dx, dy);
     double rot1 = (trans > 0.01) ? angle_diff(prev_pose.theta, atan2(dy, dx)) : 0.0;
-    std::cout << "ROT1: " << rot1 << std::endl;
     double rot2 = angle_diff(rot1, dth);
 
     // Reverse motion should not cause massive errors
@@ -88,16 +87,8 @@ namespace ndt_2d
                                    a4_ * rot2_ * rot2_);
     double sigma_rot2 = std::sqrt(a1_ * rot2_ * rot2_ + a2_ * trans * trans);
 
-    // Create distributions
-    std::normal_distribution<float> sample_rot1(rot1, sigma_rot1);
-    std::normal_distribution<float> sample_trans(trans, sigma_trans);
-    std::normal_distribution<float> sample_rot2(rot2, sigma_rot2);
-
     for (auto &pose : poses)
     {
-      // float r1 = sample_rot1(gen_);
-      // float t = sample_trans(gen_);
-      // float r2 = sample_rot2(gen_);
 
       double r1 = angle_diff(pf_ran_gaussian(sigma_rot1), rot1);
       double t = trans - pf_ran_gaussian(sigma_trans);

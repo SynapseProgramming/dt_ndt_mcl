@@ -57,11 +57,10 @@ namespace ndt_2d
     void sample(const double dx, const double dy, const double dth, Pose2d &prev_pose,
                 std::vector<Eigen::Vector3d> &poses);
 
+    double pf_ran_gaussian(double sigma);
+
   private:
     double a1_, a2_, a3_, a4_, a5_;
-
-    std::random_device random_;
-    std::mt19937 gen_;
   };
 
   using MotionModelPtr = std::shared_ptr<MotionModel>;
