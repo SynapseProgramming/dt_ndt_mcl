@@ -27,13 +27,13 @@ ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
   m_received_map = false;
   m_received_init_pose = false;
 
-  m_kld_err = 0.01;
+  m_kld_err = 0.05;
   m_kld_z = 0.99;
 
   size_t min_particles = 500;
   size_t max_particles = 2000;
   m_min_travel_distance = 0.1;
-  m_min_travel_rotation = 0.5;
+  m_min_travel_rotation = 0.25;
 
   m_scan_id = 0;
   m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
@@ -113,7 +113,6 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
     return;
   }
   ndt_2d::Pose2d odom_pose = ndt_2d::fromMsg(tf_odom_pose);
-  ndt_2d::Pose2d robot_pose;
 
   // ensure that enough distance has been travelled
   // Calculate delta in odometry frame
@@ -128,22 +127,9 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
     return;
   }
 
-  // Odometry frame is usually not aligned with map frame
-  double heading = angles::shortest_angular_distance(m_prev_odom_pose.theta,
-                                                     m_prev_robot_pose.theta);
-
-  // Now apply odometry delta, corrected by heading, to get initial corrected
-  // pose
-  robot_pose.x =
-      m_prev_robot_pose.x + (dx * cos(heading)) - (dy * sin(heading));
-  robot_pose.y =
-      m_prev_robot_pose.y + (dx * sin(heading)) + (dy * cos(heading));
-  robot_pose.theta = angles::normalize_angle(m_prev_robot_pose.theta + dth);
-
   // Add in laserscan points
   ndt_2d::ScanPtr scan = std::make_shared<ndt_2d::Scan>(m_scan_id);
   m_scan_id++;
-  scan->setPose(robot_pose);
   std::vector<ndt_2d::Point> points;
   points.reserve(msg->ranges.size());
 
@@ -178,36 +164,17 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
   }
   scan->setPoints(points);
 
-  // Extract change in position in map frame
-  Eigen::Vector3d map_delta(scan->getPose().x - m_prev_robot_pose.x,
-                            scan->getPose().y - m_prev_robot_pose.y, 1.0);
-
-  // Transform change in pose into robot-centric frame
-  Eigen::Isometry3d transform(
-      Eigen::Translation3d(0.0, 0.0, 0.0) *
-      Eigen::AngleAxisd(m_prev_robot_pose.theta, Eigen::Vector3d::UnitZ()));
-
-  Eigen::Vector3d robot_delta = transform.inverse() * map_delta;
-
-  // Compute change in heading
-  robot_delta(2) = angles::shortest_angular_distance(m_prev_robot_pose.theta,
-                                                     scan->getPose().theta);
-
-  // ROS_INFO("Updating filter with control %f %f %f", robot_delta(0),
-  //          robot_delta(1), robot_delta(2));
-
-  m_pf->update(robot_delta(0), robot_delta(1), robot_delta(2));
+  m_pf->update(dx, dy, dth, m_prev_robot_pose);
   m_pf->measure(m_scan_matcher_ptr, scan);
   m_pf->resample(m_kld_err, m_kld_z);
   auto mean = m_pf->getMean();
   ndt_2d::Pose2d mean_pose(mean(0), mean(1), mean(2));
-  scan->setPose(mean_pose);
   geometry_msgs::msg::PoseArray pose_msg;
   pose_msg.header.frame_id = "map";
   m_pf->getMsg(pose_msg);
   m_pose_particle_pub->publish(pose_msg);
 
-  m_prev_robot_pose = scan->getPose();
+  m_prev_robot_pose = mean_pose;
   m_prev_odom_pose = odom_pose;
 
   // publish best pose
