@@ -6,6 +6,9 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/common/common.h>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -35,7 +38,6 @@ public:
   double computeTrace();
 
 private:
-
   std::shared_ptr<ndt_2d::ScanMatcherNDT> m_scan_matcher_ptr;
   ndt_2d::MotionModelPtr m_motion_model;
   std::shared_ptr<ndt_2d::ParticleFilter> m_pf;
@@ -51,6 +53,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_scan_sub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr m_best_pose_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pose_particle_pub;
+
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_laser_pc_pub;
 
   bool m_received_map;
   bool m_received_init_pose;
