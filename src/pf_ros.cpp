@@ -11,6 +11,7 @@ ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
   m_init_pose_sub = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>("/initialpose", durability_qos, std::bind(&ParticleFilter2D::initPoseCallback, this, std::placeholders::_1));
   m_scan_sub = this->create_subscription<sensor_msgs::msg::LaserScan>("/scan", durability_qos, std::bind(&ParticleFilter2D::scanCallback, this, std::placeholders::_1));
   m_laser_pc_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/laser_pc", 1);
+  m_ndt_pc_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/ndt_pc", 1);
 
   m_tf_buffer =
       std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -39,15 +40,20 @@ ParticleFilter2D::ParticleFilter2D() : Node("dt_ndt_mcl_node")
   m_scan_id = 0;
   m_pf = std::make_shared<ndt_2d::ParticleFilter>(min_particles, max_particles,
                                                   m_motion_model);
+  m_ndt_cloud.reset(new pcl::PointCloud<pcl::PointXYZ>);
 }
 
 void ParticleFilter2D::mapCallback(
     const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
 
-  m_scan_matcher_ptr->addMap(*msg);
+  m_scan_matcher_ptr->addMap(*msg, m_ndt_cloud);
   RCLCPP_INFO(this->get_logger(), "Map received");
   m_received_map = true;
+  sensor_msgs::msg::PointCloud2 pc_msg;
+  pcl::toROSMsg(*m_ndt_cloud, pc_msg);
+  pc_msg.header.frame_id = "map";
+  m_ndt_pc_pub->publish(pc_msg);
 }
 
 void ParticleFilter2D::initPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
@@ -178,7 +184,6 @@ void ParticleFilter2D::scanCallback(const sensor_msgs::msg::LaserScan::SharedPtr
   pcl::toROSMsg(pc, pc_msg);
   pc_msg.header.frame_id = "base_footprint";
   m_laser_pc_pub->publish(pc_msg);
-
 
   m_pf->update(dx, dy, dth, m_prev_robot_pose);
   m_pf->measure(m_scan_matcher_ptr, scan);

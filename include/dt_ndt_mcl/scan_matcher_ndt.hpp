@@ -34,6 +34,7 @@
 
 #include <dt_ndt_mcl/ndt_model.hpp>
 #include <dt_ndt_mcl/scan_matcher.hpp>
+#include <pcl/common/common.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -96,7 +97,7 @@ namespace ndt_2d
      * @brief Add a map to the NDT map.
      * @param map The map to add to the NDT map.
      */
-    void addMap(const nav_msgs::msg::OccupancyGrid &map);
+    void addMap(const nav_msgs::msg::OccupancyGrid &map, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
     void updateLocalMap(const ScanPtr &scan);
 

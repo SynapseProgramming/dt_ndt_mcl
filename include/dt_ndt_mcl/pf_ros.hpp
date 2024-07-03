@@ -55,6 +55,10 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr m_pose_particle_pub;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_laser_pc_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr m_ndt_pc_pub;
+
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr m_ndt_cloud;
 
   bool m_received_map;
   bool m_received_init_pose;

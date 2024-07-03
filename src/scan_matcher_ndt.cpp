@@ -46,7 +46,7 @@ namespace ndt_2d
     range_max_ = range_max;
   }
 
-  void ScanMatcherNDT::addMap(const nav_msgs::msg::OccupancyGrid &map)
+  void ScanMatcherNDT::addMap(const nav_msgs::msg::OccupancyGrid &map, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
   {
     double res = map.info.resolution;
     double width = map.info.width * res;
@@ -63,6 +63,7 @@ namespace ndt_2d
         double x = (i % map.info.width) * res + map.info.origin.position.x;
         double y = (i / map.info.width) * res + map.info.origin.position.y;
         ndt_->addPoint(x, y);
+        cloud->push_back(pcl::PointXYZ(x, y, 0));
       }
     }
     ndt_->compute();
@@ -204,7 +205,7 @@ namespace ndt_2d
     // Subsample the scan
     size_t scan_points_to_use = std::min(laser_max_beams_, points.size());
     double scan_step = static_cast<double>(points.size()) / scan_points_to_use;
-
+    std::cout << "SCAN POINTS TO USE! " << scan_points_to_use << std::endl;
     double score = 0.0;
     for (size_t i = 0; i < scan_points_to_use; ++i)
     {
